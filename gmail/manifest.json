@@ -14,7 +14,7 @@
 	"content_scripts": [{
       	"matches": ["*://mail.google.com/mail/*"],
       	"js": ["script.js"],
-		"css": ["style.css"],
+		"css": ["style.css", "lukas.css"],
 		"run_at": "document_start",
 		"all_frames": false
 	}],
