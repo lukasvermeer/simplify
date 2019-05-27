@@ -1,5 +1,5 @@
 /* ==================================================
- * SIMPLIFY GMAIL v1.3.8
+ * SIMPLIFY GMAIL v1.4.2
  * By Michael Leggett: leggett.org
  * Copyright (c) 2019 Michael Hart Leggett
  * Repo: github.com/leggett/simplify/blob/master/gmail/
@@ -10,7 +10,7 @@
 
 // == SIMPL =====================================================
 // Turn debug loggings on/off
-var simplifyDebug = false;
+var simplifyDebug = true;
 
 // Print Simplify version number if debug is running
 if (simplifyDebug) console.log('Simplify version ' + chrome.runtime.getManifest().version);
@@ -313,9 +313,13 @@ function detectClassNames() {
 	simplify[u].elements["backButton"] = "." + backButton.replace(/ /g,".");
 
 	/*
+	// oneGoogle Ring around profile photo
 	var oneGoogleRing = document.querySelector('#gb div path[fill="#F6AD01"]');
 	simplify[u].elements["oneGoogleRing"] = oneGoogleRing ? "." + oneGoogleRing.parentElement.parentElement.classList.value.replace(/ /g,".") : false;
 	*/
+
+	// Support button
+	// var supportButton = document.querySelector('#gb path[d*="18h2v-2h-2v2zm1-16C6.48"]').parentElement.parentElement.classList.value
 
 	// Update the cached classnames in case any changed
 	updateParam();
@@ -454,10 +458,10 @@ function initSearchFocus() {
 var initSettingsLoops = 0;
 function initSettings() {
 	// See if settings gear has be added to the dom yet
-	var backButton = document.querySelector('header#gb div[aria-label="Go back"] svg');
+	var backButton = document.querySelector('#gb div[aria-label="Go back"] svg');
 	if (!backButton) {
 		// aria-label doesn't work with non-english interfaces but .gb_1b changes often
-		backButton = document.querySelector('header#gb div.gb_1b svg');
+		backButton = document.querySelector('#gb div[role="button"] path[d*="11H7.83l5.59-5.59L12"]').parentElement;
 	}
 
 	if (backButton) {
@@ -678,7 +682,7 @@ var detectAddOnsPaneLoops = 0;
 function detectAddOns() {
 	var addOnsPane = document.getElementsByClassName('brC-brG')[0];
 	if (addOnsPane) {
-		var paneVisible = window.getComputedStyle( document.getElementsByClassName('bq9')[0], null).getPropertyValue('width');
+		var paneVisible = window.getComputedStyle(document.getElementsByClassName('bq9')[0], null).getPropertyValue('width');
 		if (simplifyDebug) console.log('Add-on pane width loaded as ' + paneVisible);
 		if (paneVisible == "auto") {
 			if (simplifyDebug) console.log('No add-on pane detected on load');
@@ -724,7 +728,7 @@ function detectAddOns() {
 		if (simplifyDebug) console.log('detectAddOns loop #' + detectAddOnsPaneLoops);
 
 		// only try 4 times and then assume no add-on pane
-		if (detectAddOnsPaneLoops < 5) {
+		if (detectAddOnsPaneLoops < 10) {
 			// Call init function again if the add-on pane wasn't loaded yet
 			setTimeout(detectAddOns, 500);
 		} else {
@@ -793,7 +797,7 @@ function detectButtonLabel() {
 
 
 
-// Detect nav menu state
+// Detect nav state
 var detectMenuStateLoops = 0;
 function detectMenuState() {
 	var menuButton = document.querySelector('#gb div path[d*="18h18v-2H3v2zm0"]').parentElement.parentElement;
@@ -801,11 +805,11 @@ function detectMenuState() {
 		var navOpen = menuButton.getAttribute('aria-expanded');
 		menuButton.addEventListener('click', toggleMenu, false);
 		if (navOpen == "true") {
-			if (simplifyDebug) console.log('Nav menu is open');
+			if (simplifyDebug) console.log('Nav is open');
 			updateParam('navOpen', true);
 			htmlEl.classList.add('navOpen');
 		} else {
-			if (simplifyDebug) console.log('Nav menu is closed');
+			if (simplifyDebug) console.log('Nav is closed');
 			updateParam('navOpen', false);
 			htmlEl.classList.remove('navOpen');
 		}
@@ -813,11 +817,11 @@ function detectMenuState() {
 		detectMenuStateLoops++;
 		if (detectMenuStateLoops < 5) {
 			setTimeout(detectMenuState, 500);
-			if (simplifyDebug) console.log('Detect menu state loop #' + detectMenuStateLoops);
+			if (simplifyDebug) console.log('Detect nav state loop #' + detectMenuStateLoops);
 		}
 	}
 }
-// Helper function to toggle menu open/closed
+// Helper function to toggle nav open/closed
 function toggleMenu() {
 	if (simplifyDebug) console.log('Toggle nav');
 	var menuButton = document.querySelector(`#gb ${simplify[u].elements.menuButton}`);
@@ -920,25 +924,54 @@ function detectDelegate() {
 function initAppSwitcher() {
 	var profileButton = document.querySelectorAll('#gb a[href^="https://accounts.google.com/SignOutOptions"], #gb a[aria-label^="Google Account: "]')[0];
 	var appSwitcherWrapper = document.querySelector('#gbwa');
+	var appBar = document.querySelector('#gb');
 	if (profileButton && appSwitcherWrapper) {
 		profileButton.addEventListener('mouseenter', function(event) {
 			htmlEl.classList.add('appSwitcher');
 		}, false);
 
-		appSwitcherWrapper.addEventListener('mouseleave', function(event) {
+		appBar.addEventListener('mouseleave', function(event) {
 			htmlEl.classList.remove('appSwitcher');
 		}, false);
 	}
 }
 
 
+
+
 // Detect if there are other 3rd party extensions installed
+// TODO: Figure out how to auto-dismiss the tray once open – as is, it breaks the app switcher
 function detectOtherExtensions() {
-	var otherExtensions = document.querySelectorAll('#gb .manage_menu, #gb .inboxsdk__appButton, #gb #mailtrack-menu-opener, #gb .mixmax-appbar').length;
-	if (otherExtensions > 0) {
+	const otherExtensionsList = {
+		'#gb .manage_menu':{'width':70, 'initial':100}, /* Boomerang */
+		'#gb .inboxsdk__appButton':{'width':56, 'initial':114}, /* Streak */
+		'#gb #mailtrack-menu-opener':{'width':44, 'initial':120}, /* Mail track */
+		'#gb .mixmax-appbar':{'width':56, 'initial':100} /* Mixmax */
+	};
+	const otherExtensions = document.querySelectorAll( Object.keys(otherExtensionsList).toString() );
+	
+	// window.getComputedStyle(document.querySelector('#gb .inboxsdk__appButton'), null).getPropertyValue('width')
+	if (otherExtensions.length > 0) {
 		htmlEl.classList.add('otherExtensions');
 		updateParam('otherExtensions', true);
 		if (simplifyDebug) console.log('Other extensions detected');
+
+		// See if extension exists and if it does, set its right pos by width + padding
+		let extensionsWidth = 0;
+		Object.entries(otherExtensionsList).forEach(function(extension) {
+			if (simplifyDebug) console.log(`Extensions - Looking for ${extension[0]}...`);
+			let extensionEl = document.querySelector(extension[0]);
+			if (extensionEl) {
+				if (extensionsWidth == 0) {
+					extensionsWidth = extension[1].initial;
+				}
+				extensionEl.style.setProperty('right', `${extensionsWidth}px`);
+				extensionsWidth += extension[1].width;
+				if (simplifyDebug) console.log(`Extensions - right position now: ${extensionsWidth}px`);
+			} else {
+				if (simplifyDebug) console.log(`Extensions - Couldn't find ${extension}`);
+			}
+		});
 	} else {
 		htmlEl.classList.remove('otherExtensions');
 		updateParam('otherExtensions', false);
@@ -975,12 +1008,12 @@ function initEarly() {
 	initStyle();
 	initSearch();
 	initSearchFocus();
-	initSettings();
 	detectDelegate();
 }
 window.addEventListener('DOMContentLoaded', initEarly, false);
 
 function initLate() {
+	initSettings();
 	detectClassNames();
 	detectTheme();
 	detectSplitView();
@@ -993,6 +1026,8 @@ function initLate() {
 	testPagination();
 	observePagination();
 	checkLocalVar();
-	detectOtherExtensions();
+
+	// 3rd party extensions take a few seconds to load
+	setTimeout(detectOtherExtensions, 5000);
 }
 window.addEventListener('load', initLate, false);
