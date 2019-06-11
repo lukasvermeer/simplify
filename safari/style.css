@@ -59,6 +59,7 @@ html.simpl .bir {
 	font-weight: bold;
 	border: none;
 	box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
+	-webkit-box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
 	border-radius: 2px;
 
 	/* Override the black on yellow default theme */
@@ -89,9 +90,9 @@ html.simpl #gb a[href="#inbox"] {
 html.simpl #gbwa {
 	display: none !important;
 	position: absolute;
-    right: 0px;
-    padding: 12px 66px 14px 12px;
-	margin: -8px -12px 0 0;
+    right: 0px !important;
+    padding: 12px 66px 14px 12px !important;
+	margin: -8px -12px 0 0 !important;
 }
 html.simpl.appSwitcher #gbwa {
 	display: block !important;
@@ -109,6 +110,7 @@ html.simpl .vX .vh {
     border-radius: 0 0 4px 4px;
     padding: 8px 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 /* Reduce width of app bar when Addons are open */
@@ -134,7 +136,7 @@ html.simpl .aeH {
 	z-index: 6;
 }
 html.simpl .aeH .G-atb {
-	height: 64px;
+	height: 64px !important;
 }
 
 /* Remove extra right margin from action bar so it is spaced correctly */
@@ -145,8 +147,8 @@ html.simpl .aeH .G-atb[gh="tm"] {
 
 /* Hide extra drop shadow on action bar - it bleeds through on the filter pop-up */
 html.simpl .aeH .G-atb::before {
-	box-shadow: none;
-	-webkit-box-shadow: none;
+	box-shadow: none !important;
+	-webkit-box-shadow: none !important;
 }
 
 /* Make bar wider when search is hidden */
@@ -338,7 +340,7 @@ States (text button labels)
 	/* Apply variables to align left edge except if the menu and addOns or rhsChat are both open */
 	html.simpl:not(.splitView):not(.multiBoxHorz):not(.multiBoxVert):not(.addOnsOpen):not(.rhsChat):not(.textButtons) .aeH .G-atb,
 	html.simpl:not(.splitView):not(.multiBoxHorz):not(.multiBoxVert):not(.navOpen):not(.textButtons) .aeH .G-atb {
-		padding-left: calc(((100vw - var(--content-width)) / 2) - var(--left-offset));
+		padding-left: calc(((100vw - var(--content-width)) / 2) - var(--left-offset)) !important;
 		margin-left: 16px !important;
 	}
 
@@ -398,7 +400,7 @@ States (text button labels)
 @media only screen and (min-width: 1641.98px) {
 	/* Apply variables to align left edge */
 	html.simpl:not(.splitView):not(.multiBoxHorz):not(.multiBoxVert) .aeH .G-atb {
-		padding-left: calc(((100vw - var(--content-width)) / 2) - var(--left-offset));
+		padding-left: calc(((100vw - var(--content-width)) / 2) - var(--left-offset)) !important;
 		margin-left: 16px !important;
 	}
 
@@ -449,7 +451,8 @@ html.simpl.hideSearch #gb form {
 	width: 54px;
 	margin-right: 0px;
 	box-shadow: none;
-	background-color: transparent;
+	-webkit-box-shadow: none;
+	background-color: transparent !important;
 }
 
 /* Hide all search form buttons except search button when search is hidden */
@@ -502,6 +505,7 @@ html.simpl.inSettings .aeN {
 /* Don't show the nav when hovering over the compose button */
 html.simpl .bym {
 	box-shadow: none !important;
+	-webkit-box-shadow: none !important;
 }
 html.simpl .bhZ div[role="complementary"],
 html.simpl .bhZ div[gh="ns"] {
@@ -509,17 +513,19 @@ html.simpl .bhZ div[gh="ns"] {
 }
 
 /* No shadow or label on compose button */
-html.simpl .z0 > .L3 {
+html.simpl .z0 > div[gh="cm"] /*.L3*/ {
 	box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3) !important;
-	border-radius: 28px;
-    font-size: 0;
-    height: 56px;
-    padding: 0;
-    width: 56px;
+	-webkit-box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3) !important;
+	border-radius: 28px !important;
+    font-size: 0 !important;
+    height: 56px !important;
+    padding: 0 !important;
+    width: 56px !important;
+    overflow: hidden;
 }
 
 /* Make FAB dark in dark themes */
-html.simpl.darkTheme .z0 > .L3 {
+html.simpl.darkTheme .z0 > div[gh="cm"] /*.L3*/ { 
 	background-color: rgba(51,51,51,.9);
 }
 
@@ -529,9 +535,10 @@ html.simpl .z0 {
     left: calc(100vw - 92px);
     top: calc(100vh - 140px);
     z-index: 3 !important;
-	width: 54px;
-    margin: 0;
-    padding: 0;
+	width: 56px !important;
+	height: 56px !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Move it over futher if RHS Chat is enabled */
@@ -546,8 +553,8 @@ html.simpl .wT {
 
 /* Hide top shadow when you scroll long label list */
 html.simpl .aeN .ajj:before {
-    -webkit-box-shadow: none;
     box-shadow: none;
+    -webkit-box-shadow: none;
 }
 
 /* Hide the compose and add-ons button when in Settings */
@@ -558,13 +565,13 @@ html.simpl.inSettings .bAw {
 
 /* Make the bottom Hangouts tabs a little less ugly */
 html.simpl div[gh="gt"] {
-	text-align: left;
-	border-top: 0px;
+	text-align: left !important;
+	border-top: 0px !important;
 	padding-left: 18px;
 }
 html.simpl.rhsChat div[gh="gt"] {
-	text-align: right;
-	border-top: 0px;
+	text-align: right !important;
+	border-top: 0px !important;
 	padding-left: 0px;
 }
 html.simpl.rhsChat .akj {
@@ -690,6 +697,7 @@ html.simpl .zA.yO .cL {
 /* Less shadow on items on hover */
 html.simpl .zA:hover {
 	box-shadow: inset 1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,0.15) !important;
+	-webkit-box-shadow: inset 1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,0.15) !important;
 }
 
 /* Dim Default Inbox category tabs */
@@ -748,8 +756,8 @@ html.simpl.splitView .G-atb[gh="tm"] {
 	padding-right: 0px !important;
 }
 html.simpl.splitView .G-atb[gh="tm"]:before {
-	box-shadow: none;
-	-webkit-box-shadow: none;
+	box-shadow: none !important;
+	-webkit-box-shadow: none !important;
 }
 
 /* If Multiple Inboxes AND Preview Pane are enabled,
@@ -880,7 +888,7 @@ html.simpl div[contenteditable="true"],
 html.simpl div[role="listitem"] .a3s,
 html.simpl div[role="listitem"] .g6,
 html.simpl div[role="listitem"] div:not(.ajA) h3.iw {
-	font-size: .875rem;
+	font-size: 0.875rem !important;
 }
 
 /* Dim from email address in conversation view */
@@ -899,6 +907,7 @@ html.simpl .ata-asE {
 	padding: 18px;
 	border: none;
 	box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
+	-webkit-box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
 }
 html.simpl .ata-asE > span:first-child:not(.ata-asJ) {
 	padding-right: 12px;
@@ -995,23 +1004,25 @@ html.simpl .bAw {
 	overflow-x: hidden;
 	border-radius: 27px;
 	box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3) !important;
+	-webkit-box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3) !important;
 	transition: height 0s ease-out 0s;
 	transition: width 0s ease-out 0s;
 	transition: right 0s ease-out 0s;
+	transition-duration: 0s !important;
 	background-color: rgba(255,255,255,.9);
-	background-image: url("https://www.gstatic.com/images/icons/material/system/2x/more_horiz_grey600_24dp.png");
+	background-image: url("https://www.gstatic.com/images/icons/material/system/2x/more_horiz_grey600_24dp.png") !important;
 	background-repeat: no-repeat;
 	background-position: 6px 7px;
 	background-size: 24px;
 }
 html.simpl.darkTheme .bAw {
 	background-color: rgba(51,51,51,.9);
-	background-image: url("https://www.gstatic.com/images/icons/material/system/2x/more_horiz_white_24dp.png");
+	background-image: url("https://www.gstatic.com/images/icons/material/system/2x/more_horiz_white_24dp.png") !important;
 }
 
 /* Hide everything inside the add-ons menu until you hover on it */
 html.simpl .bAw > div:first-child {
-	display: none;
+	display: none !important;
 }
 
 /* Show add-ons when you hover over the menu */
@@ -1031,7 +1042,7 @@ html.simpl .bAw:hover > div:first-child {
 	background-color: #fff;
 }
 html.simpl .bAw > div:first-child:hover > div {
-	display: block;
+	display: block !important;
 	margin: 0px;
 	opacity: 1;
 }
@@ -1110,6 +1121,7 @@ html.simpl .brC-dA-I.aT5-aOt-I-Jp .aT5-aOt-I-JX-Jw {
 html.simpl .bq9,
 html.simpl .bq9 div {
 	box-shadow: none;
+	-webkit-box-shadow: none;
 }
 html.simpl .bq9 {
 	border-left: 1px solid rgba(0,0,0,0.1);
@@ -1241,6 +1253,7 @@ html.simpl div.G-atb div.mixmax-reminder-thread-button {
     max-width: 20px !important;
     border: none !important;
     box-shadow: none !important;
+    -webkit-box-shadow: none !important;
     width: 20px !important;
     padding-left: 0px !important;
     min-width: 20px !important;
