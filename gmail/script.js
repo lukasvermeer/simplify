@@ -1,5 +1,5 @@
 /* ==================================================
- * SIMPLIFY GMAIL v1.5.8
+ * SIMPLIFY GMAIL v1.5.9
  * By Michael Leggett: leggett.org
  * Copyright (c) 2019 Michael Hart Leggett
  * Repo: github.com/leggett/simplify/blob/master/gmail/
@@ -24,19 +24,64 @@ function toggleSimpl() {
 	return htmlEl.classList.toggle('simpl');
 }
 
+// Helper function for keyboard shortcuts to determine if an element is not editable
+function notEditable(el) {
+	el = el ? el : document.activeElement;
+
+	// BUG: Still firing when inputs are in focus
+	// I think Gmail is removing focus before this function runs
+	if (el.isContentEditable || el.tagName == "INPUT") {
+		if (simplifyDebug) {
+			console.log('IS or WAS editable');
+			console.log(el);
+		}
+		return false;
+	}
+	else {
+		if (simplifyDebug) {
+			console.log('NOT editable');
+			console.log(el);			
+		}
+		return true;
+	}
+}
+
 // Handle Simplify keyboard shortcuts
-function handleToggleShortcut(event) {
-	// If Cmd+J was pressed, toggle simpl
-	if (event.metaKey && event.which == 74) {
+function handleToggleShortcut(event) {	
+	// WIP: If Escape was pressed, close conversation or search
+	if (event.key === "Escape") {
+		// Only close if focus wasn't in an input or content editable div
+		if (notEditable()) {
+			if (simplifyDebug) console.log('Close search or conversation');
+
+			// TODO: IF conversation is open
+
+			// TODO: ELSE If in search results (check url)
+
+			// TODO: ELSE, we could either return to the inbox or do nothing
+
+			// event.preventDefault();
+		}
+	}
+
+	// If Ctrl+Shift+S or Command+Shift+S was pressed, toggle Simpl
+	if ((event.ctrlKey && event.shiftKey && event.key === "S") || 
+		(event.metaKey && event.shiftKey && event.key === "s")) {
 		toggleSimpl();
 		event.preventDefault();
 	}
 
-	// If Ctrl+M was pressed, toggle menu open/closed
-	if (event.ctrlKey && event.key == "m") {
+	// If Ctrl+Shift+M or Command+Shift+M was pressed, toggle nav menu open/closed
+	if ((event.ctrlKey && event.shiftKey && event.key === "M") || 
+		(event.metaKey && event.shiftKey && event.key === "m")) {
 		document.querySelector('.aeN').classList.toggle('bhZ');
 		toggleMenu();
-		// TODO: if opening, focus the first element
+		event.preventDefault();
+
+		// If opening, focus the first element
+		if (!document.querySelector('.aeN').classList.contains('bhZ')) {
+			document.querySelector('div[role="navigation"] a:first-child').focus();
+		}
 	}
 }
 window.addEventListener('keydown', handleToggleShortcut, false);
