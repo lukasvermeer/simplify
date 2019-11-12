@@ -1,5 +1,5 @@
 /* ==================================================
- * SIMPLIFY GMAIL v1.6.3
+ * SIMPLIFY GMAIL v1.7.0
  * By Michael Leggett: leggett.org
  * Copyright (c) 2019 Michael Hart Leggett
  * Repo: github.com/leggett/simplify/blob/master/gmail/
@@ -47,7 +47,7 @@ function notEditable(el) {
 }
 
 // Handle Simplify keyboard shortcuts
-function handleKeyboardShortcut(event) {	
+function handleKeyboardShortcut(event) {
 	// WIP: If Escape was pressed, close conversation or search
 	if (event.key === "Escape") {
 		// Only close if focus wasn't in an input or content editable div
@@ -64,41 +64,42 @@ function handleKeyboardShortcut(event) {
 		}
 	}
 
-	/* If Ctrl+M or Command+M was pressed, toggle nav menu open/closed
-	BUG: THIS CONFLICTS WITH CHANGING THE PROFILE IN CHROME */
+	/* If Ctrl+M or Command+M was pressed, toggle nav menu open/closed */
 	if ((event.ctrlKey && (event.key === "M" || event.key === "m")) || 
 		(event.metaKey && event.key === "m")) {
-		document.querySelector('.aeN').classList.toggle('bhZ');
-		toggleMenu();
-		event.preventDefault();
+		if (simplSettings.kbsMenu) {
+			document.querySelector('.aeN').classList.toggle('bhZ');
+			toggleMenu();
+			event.preventDefault();
 
-		// If opening, focus the first element
-		if (!document.querySelector('.aeN').classList.contains('bhZ')) {
-			document.querySelector('div[role="navigation"] a:first-child').focus();
+			// If opening, focus the first element
+			if (!document.querySelector('.aeN').classList.contains('bhZ')) {
+				document.querySelector('div[role="navigation"] a:first-child').focus();
+			}
+		} else if (!simplSettings.kbsNotified) {
+			if (htmlEl.classList.contains('navOpen')) {
+				showNotification('Trying to hide the main menu? Enable the keyboard shortcut in Simplify Settings.');
+			} else {
+				showNotification('Trying to show the main menu? Enable the keyboard shortcut in Simplify Settings.');
+			}
+			
 		}
 	}
 
 	/* If Ctrl+S or Command+S was pressed, toggle Simplify on/off */
 	if ((event.ctrlKey && (event.key === "S" || event.key === "s")) || 
 		(event.metaKey && event.key === "s")) {
-		toggleSimpl();
-		event.preventDefault();
-	}
-
-	/* If Ctrl+Shift+M or Command+Shift+M was pressed, toggle nav menu open/closed
-	BUG: THIS CONFLICTS WITH CHANGING THE PROFILE IN CHROME
-	if ((event.ctrlKey && event.shiftKey && event.key === "M") || 
-		(event.metaKey && event.shiftKey && event.key === "m")) {
-		document.querySelector('.aeN').classList.toggle('bhZ');
-		toggleMenu();
-		event.preventDefault();
-
-		// If opening, focus the first element
-		if (!document.querySelector('.aeN').classList.contains('bhZ')) {
-			document.querySelector('div[role="navigation"] a:first-child').focus();
+		if (simplSettings.kbsToggle) {
+			toggleSimpl();
+			event.preventDefault();
+		} else if (!simplSettings.kbsNotified) {
+			if (htmlEl.classList.contains('simpl')) {
+				showNotification('Trying to disable Simplify? Enable the keyboard shortcut in Simplify Settings.');
+			} else {
+				showNotification('Trying to enable Simplify? Enable the keyboard shortcut in Simplify Settings.');
+			}
 		}
 	}
-	*/
 }
 window.addEventListener('keydown', handleKeyboardShortcut, false);
 
@@ -113,6 +114,74 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
 // Activate page action button
 chrome.runtime.sendMessage({action: 'activate_page_action'});
+
+
+
+// == SIMPLIFY SETTINGS =====================================================
+// Load Simplify Settings
+let simplSettings = {};
+chrome.storage.local.get(null, function (results) {
+	if (results == null) {
+		console.log('No settings yet -- maybe initialize them');
+	} else {
+		simplSettings = results;
+	}
+	applySettings(simplSettings);
+});
+
+// Apply setting
+function applySettings(settings) {
+	if (simplifyDebug) console.log("Apply settings: " + JSON.stringify(settings));
+	for (let key in settings) {
+		switch (key) {
+			case "hideAddons":
+				simplSettings.hideAddons = settings[key];
+				if (simplSettings.hideAddons) {
+					htmlEl.classList.add("hideAddons");
+				} else {
+					htmlEl.classList.remove("hideAddons");
+				}
+				break;
+			case "minimizeSearch":
+				simplSettings.minimizeSearch = settings[key];
+				if (simplSettings.minimizeSearch) {
+					htmlEl.classList.add("hideSearch");
+				} else {
+					htmlEl.classList.remove("hideSearch");
+				}
+				break;
+			case "kbsMenu":
+				simplSettings.kbsMenu = settings[key];
+				break;
+			case "kbsToggle":
+				simplSettings.kbsToggle = settings[key];
+				break;
+			case "dateGrouping":
+				simplSettings.dateGrouping = settings[key];
+				if (simplSettings.dateGrouping) {
+					observeThreadlist();
+				} else {
+					threadlistObserver.disconnect();
+				}
+				break;
+		}
+	}
+}
+
+// Detect changes in settings and make appropriate changes
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+	for (let key in changes) {
+		let newSettings = {};
+		newSettings[key] = changes[key].newValue;
+		applySettings(newSettings);
+	}
+});
+
+// TODO: show announcement and link to settings page 
+const optionsUrl = chrome.extension.getURL("options.html");
+if (simplifyDebug) console.log(optionsUrl);
+// const content = '<a href="' + optionsUrl + '" target="_blank">Options</a>';
+
 
 
 
@@ -289,7 +358,7 @@ if (simplify[u].minimizeSearch == null) {
 		updateParam('minimizeSearch', false);
 	}
 }
-if (simplify[u].minimizeSearch) {
+if (simplify[u].minimizeSearch || simplSettings.minimizeSearch) {
 	if (simplifyDebug) console.log('Loading with search hidden');
 	htmlEl.classList.add('hideSearch');
 }
@@ -340,6 +409,13 @@ window.onhashchange = function() {
 	// if we were supposed to check the theme later, do it now
 	if (checkThemeLater) {
 		detectTheme();
+	}
+
+	// See if we need to date group the view
+	// todo maybe stop the observer and start a new one?
+	if (simplSettings.dateGrouping) {
+		threadlistObserver.disconnect();
+		observeThreadlist();
 	}
 }
 
@@ -522,6 +598,44 @@ findSupport();
 
 
 
+// == IN-GMAIL SIMPLIFY NOTIFICATIONS ======================================
+function showNotification(msg) {
+	let notificationBox = document.getElementById('simplNotification');
+	if (notificationBox) {
+		// If notification already exists, just show it again
+		notificationBox.style.display = "block";
+	} else {
+		// Create notification bubble, attach to body
+		let notificationEl = document.createElement('div');
+		notificationEl.id = "simplNotification";
+		document.body.appendChild(notificationEl);
+		notificationBox = document.getElementById('simplNotification');
+	}
+
+	// Add content and buttons to notification div
+	notificationBox.innerHTML = msg + '<br>';
+	notificationBox.innerHTML += '<button id="openSettings">Simplify settings</button>'
+	notificationBox.innerHTML += '<button class="secondary" id="closeNotification">Close</button>';
+
+	// Add event listeners for buttons
+	document.querySelector('#simplNotification #openSettings').addEventListener('click', function() {
+		let optionsUrl = chrome.extension.getURL("options.html");
+		window.open(optionsUrl, '_blank');
+		notificationBox.style.display = 'none';
+		clearTimeout(autoCloseNotification);
+	}, false);
+	document.querySelector('#simplNotification #closeNotification').addEventListener('click', function() {
+		notificationBox.style.display = 'none';
+		clearTimeout(autoCloseNotification);
+		simplSettings.kbsNotified = true;
+	}, false);
+
+	// Auto hide this notification in 30 seconds
+	let autoCloseNotification = setTimeout(function() {
+		notificationBox.style.display = 'none';
+	}, 30000);
+}
+
 
 // == SEARCH FUNCTIONS =====================================================
 
@@ -582,7 +696,7 @@ function initSearch() {
 			} else {
 				location.hash = closeSearchUrlHash;
 			}
-			if (simplify[u].minimizeSearch) {
+			if (simplify[u].minimizeSearch || simplSettings.minimizeSearch) {
 				htmlEl.classList.add('hideSearch');
 			}
 		}, false);
@@ -615,14 +729,6 @@ function initSearchFocus() {
 			htmlEl.classList.remove('hideSearch');
 		}, false );
 
-		// Hide search box if it loses focus, is empty, and was previously hidden
-		searchInput.addEventListener('blur', function(event) {
-			// if (this.value == "" && (simplify[u].minimizeSearch || event.target.name == "q")) {
-			if (this.value == "" && simplify[u].minimizeSearch) {
-				htmlEl.classList.add('hideSearch');
-			}
-		}, false );
-
 		// Remove the placeholder text in the search box
 		searchInput.placeholder = "";
 
@@ -642,6 +748,16 @@ function initSearchFocus() {
 		searchInput.addEventListener('blur', () => {
 			// Remove searchFocus from html element
 			htmlEl.classList.remove('searchFocused');
+
+			// Hide search box if it loses focus, is empty, and was previously hidden
+			if (simplifyDebug) {
+				console.log("Search for '%s' with [u]ms set to %s and ss.ms set to %s", 
+					searchInput.value, simplify[u].minimizeSearch, simplSettings.minimizeSearch);
+			}
+			if ((searchInput.value == "" || searchInput.value == null) && 
+				(simplify[u].minimizeSearch || simplSettings.minimizeSearch)) {
+				htmlEl.classList.add('hideSearch');
+			}
 		});
 	} else {
 		// If the search field can't be found, wait and try again
@@ -1230,6 +1346,106 @@ function detectOtherExtensions() {
  * You have to use chrome.runtime.getURL(string path)
  * More info: https://developer.chrome.com/extensions/runtime#method-getURL
  */
+
+
+
+/* ==========================================================================================
+	Adding date gaps in the inbox between the following sections
+	Today
+	Yesterday
+	This month
+	<Month name>
+	<Month name year>
+	Earlier
+	----
+	TODO:
+	- Make it more efficient (I'm calling insertDateGaps more often than I should)
+ */
+
+// Date constants
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
+const month0 = new Date(now.getFullYear(), now.getMonth(), 1);
+const month1 = new Date(now.getFullYear(), now.getMonth()-1, 1);
+const month2 = new Date(now.getFullYear(), now.getMonth()-2, 1);
+let justRan = false;
+
+// Insert date gaps
+function insertDateGaps(mutationList, observer) {
+	if (simplifyDebug) {
+		if (mutationList) {
+			console.log(mutationList);
+		} else {
+			console.log('No mutation list')
+		}		
+	}
+
+	let lists = document.querySelectorAll('.UI table[role="grid"]');
+
+	if (lists.length > 0) {
+		if (simplifyDebug) console.log('Inserting date gaps');
+		lists.forEach(function(list) {
+			let items = list.querySelectorAll('.zA');
+			items.forEach(function(item){
+				if (!item.querySelector('.byZ > div')) { // Skip item if it was snoozed
+					let itemDate = new Date(item.querySelector('.xW > span').title);
+					if (itemDate > today) {
+						item.setAttribute('date', 'today');
+					} else if (itemDate >= yesterday) {
+						item.setAttribute('date', 'yesterday');
+					} else if (itemDate >= month0) {
+						item.setAttribute('date', 'month0');
+					} else if (itemDate >= month1) {
+						item.setAttribute('date', 'month1');
+					} else if (itemDate >= month2) {
+						item.setAttribute('date', 'month2');
+					} else {
+						item.setAttribute('date', 'earlier');
+					}
+				}
+			});
+		});
+	}
+}
+
+const threadlistObserver = new MutationObserver(insertDateGaps);
+let observeThreadlistLoops = 1;
+function observeThreadlist() {
+	// Start observing the target node for configured mutations
+	let threadlist = document.querySelector('div[gh="tl"]');
+	if (threadlist) {
+		if (simplSettings.dateGrouping) {
+			insertDateGaps();
+			threadlistObserver.observe(threadlist, { attributes: false, childList: true, subtree: true });
+			if (simplifyDebug) console.log('Adding mutation observer for threadlist');			
+		}
+	} else {
+		if (observeThreadlistLoops < 10) {
+			setTimeout(observeThreadlist, 500);
+			observeThreadlistLoops++;
+			if (simplifyDebug) console.log('observeThreadlist attempt #' + observeThreadlistLoops);
+		}
+	}
+}
+observeThreadlist();
+
+
+/*
+mutation observers:
+https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver/MutationObserver
+
+childlist: One or more children have been added to and/or removed from the tree; see mutation.addedNodes and mutation.removedNodes 
+
+attributes: An attribute value changed on the element in mutation.target; the attribute name is in mutation.attributeName and its previous value is in mutation.oldValue
+
+subtree: Omit or set to false to observe only changes to the parent node.
+ */
+
+/* ========================================================================================== */
+
+
+
 
 
 // Initialize styles as soon as head is ready
